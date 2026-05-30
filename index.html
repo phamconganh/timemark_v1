@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chèn Text & Watermark vào Ảnh</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111111" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./assets/icons/timemark-icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="./assets/icons/timemark-icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap" rel="stylesheet">
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="./assets/js/heic2jpg.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            color: white;
+        }
+
+        body {
+            font-family: Roboto, sans-serif;
+            padding: 20px;
+            margin: auto;
+            text-align: center;
+        }
+
+        div.wrapper {
+            aspect-ratio: 1290 / 1720;
+            display: block;
+            width: 1290px;
+            position: relative;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            background-image: url('./assets/images/real.jpg');
+        }
+
+        #image {
+            position: relative;
+            background: #000;
+            top: 0;
+            left: 0;
+            object-fit: cover;
+            object-position: center;
+            height: 125px;
+        }
+
+        #template {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            object-fit: cover;
+            opacity: 0.5;
+            object-position: center;
+        }
+
+        .water-mark {
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+            left: 0;
+            padding: 30px;
+            padding-bottom: 40px;
+        }
+
+        .time {
+            font-size: 135px;
+            font-family: 'Big Shoulders', sans-serif;
+            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+            transform: translateY(-9%) scaleX(0.9);
+        }
+
+        .time-wrap {
+            height: 135px;
+            width: auto;
+            overflow-y: hidden;
+        }
+
+        .date {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 43px;
+            height: 140px;
+            padding-left: 26px;
+            word-spacing: -6px;
+        }
+
+        .weekday {
+            text-align: left;
+        }
+
+        div.seperator {
+            border-right: 6px #f7c22e solid;
+            height: 135px;
+            margin-left: 25px;
+        }
+
+        .line-1 {
+            display: flex;
+            flex-direction: row;
+            margin-bottom: 16px;
+        }
+
+        .line-2 {
+            text-align: left;
+            font-size: 40px;
+            width: 840px;
+            line-height: 54px;
+            word-spacing: -1.2px;
+        }
+
+        input,
+        button {
+            margin-top: 10px;
+            display: block;
+        }
+
+        .right {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+        }
+
+        .logo {
+            font-size: 44px;
+        }
+
+        .logo-time {
+            color: #f7c22e;
+        }
+
+        .logo-desc {
+            font-size: 25px;
+            word-spacing: 2px;
+        }
+
+        .guard-check {
+            position: absolute;
+            right: -246px;
+            transform: rotate(-90deg);
+            top: -612px;
+            display: inline-flex;
+            flex-direction: row;
+            font-size: 27px;
+            word-spacing: 0px;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.7;
+        }
+
+        .guard-text {
+            padding-left: 20px;
+        }
+
+        .form-custom {
+            text-align: left;
+            color: black;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-custom * {
+            text-align: left;
+            color: black;
+        }
+
+        .form-custom label {
+            margin-right: 10px;
+        }
+
+        .form-custom input {
+            margin: 0;
+        }
+
+        .form-custom>div {
+            display: flex;
+            align-items: center;
+        }
+
+        .guard-token {
+            width: 270px;
+        }
+
+        .view-port {
+            width: 0;
+            height: 0;
+            overflow: scroll;
+            margin-top: 10px;
+        }
+
+        .hide {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <i>
+        <div style="color: black; text-align: left !important;">Version: 1.0.7</div>
+    </i>
+    <br>
+    <div class="form-custom">
+        <div>
+            <input type="file" accept="image/*" id="upload" accept="image/*">
+        </div>
+
+        <div>
+            <label for="time-picker">Chọn giờ:</label>
+            <input type="time" id="time-picker" value="00:00" />
+        </div>
+
+        <div>
+            <label for="date-picker">Chọn ngày:</label>
+            <input type="date" id="date-picker" />
+        </div>
+
+        <div>
+            <label for="location-picker">Nhập địa điểm:</label>
+            <textarea cols="70" rows="3" id="location-picker"></textarea>
+        </div>
+
+        <div>
+            <button id="preview-image" onclick="downloadImage()" style="margin-right: 100px;">
+                Tạo
+            </button>
+            <i id="loading" class="hide">Đang xử lý . . .</i>
+        </div>
+    </div>
+
+    <div class="view-port">
+        <div class="wrapper" id="wrapper">
+            <!-- <img src="./assets/images/real.jpg" width="1290" height="1720" id="image" /> -->
+            <div class="water-mark">
+                <div class="left">
+                    <div class="line-1">
+                        <div class="time-wrap">
+                            <div class="time" id="time">
+                                15:42
+                            </div>
+                        </div>
+                        <div class="seperator">
+
+                        </div>
+                        <div class="date">
+                            <div class="date-string" id="date">
+                                16 Tháng 6, 2025
+                            </div>
+                            <div class="weekday" id="weekday">
+                                Thứ Hai
+                            </div>
+                        </div>
+                    </div>
+                    <div class="line-2" id="location">
+                        Tòa Nhà B3B - Khu Đô Thị Nam Trung Yên, P. Trung Hòa, Q. Cầu Giấy, Thành Phố Hà Nội
+                    </div>
+                </div>
+                <div class="right">
+                    <div class="logo">
+                        <span class="logo-time">Time</span>mark
+                    </div>
+                    <div class="logo-desc">
+                        100% Chân thực
+                    </div>
+                </div>
+                <div class="guard-check">
+                    <svg fill="white" width="25px" height="25px" viewBox="0 0 36 36" version="1.1"
+                        preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <title>shield-check-line</title>
+                            <path
+                                d="M31.25,7.4a43.79,43.79,0,0,1-6.62-2.35,45,45,0,0,1-6.08-3.21L18,1.5l-.54.35a45,45,0,0,1-6.08,3.21A43.79,43.79,0,0,1,4.75,7.4L4,7.59v8.34c0,13.39,13.53,18.4,13.66,18.45l.34.12.34-.12c.14,0,13.66-5.05,13.66-18.45V7.59ZM30,15.93c0,11-10,15.61-12,16.43-2-.82-12-5.44-12-16.43V9.14a47.54,47.54,0,0,0,6.18-2.25,48.23,48.23,0,0,0,5.82-3,48.23,48.23,0,0,0,5.82,3A47.54,47.54,0,0,0,30,9.14Z"
+                                class="clr-i-outline clr-i-outline-path-1"></path>
+                            <path d="M10.88,16.87a1,1,0,0,0-1.41,1.41l6,6L26.4,13.77A1,1,0,0,0,25,12.33l-9.47,9.19Z"
+                                class="clr-i-outline clr-i-outline-path-2"></path>
+                            <rect x="0" y="0" width="36" height="36" fill-opacity="0"></rect>
+                        </g>
+                    </svg>
+
+                    <div class="guard-token" id="guard-token">
+                        Y69XRCBP47XWNN
+                    </div>
+                    <div class="guard-text">
+                        Timemark Verified
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <img src="" alt="" id="image-to-download" width="100%" height="auto">
+
+    <script>
+        const upload = document.getElementById('upload');
+        const image = document.getElementById('image');
+        const wrapper = document.getElementById('wrapper');
+        const downloadBtn = document.getElementById('download-image');
+        const loading = document.getElementById('loading');
+
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+
+        function downloadDivAsJPG() {
+            try {
+                loading.classList.toggle('hide', false);
+                const div = wrapper;
+                html2canvas(div, {
+                    backgroundColor: "#fff",
+                    logging: true,
+                    // set screenshot less than 4,096 x 4,096px
+                    scale: Math.min(window.devicePixelRatio, 2),
+                }).then(canvas => {
+
+                    const dataUrl = canvas.toDataURL("image/jpeg", 1.0);
+                    const download = "screen_shot.jpg";
+
+                    var img = document.getElementById('image-to-download');
+                    img.crossOrigin = "Anonymous";
+                    img.src = dataUrl;
+                    document.body.appendChild(img);
+                    loading.classList.toggle('hide', true);
+                }).catch(e => {
+                    alert(e);
+                });
+            } catch (error) {
+                alert(error);
+            }
+        }
+
+        function getVietnameseDayOfWeek(date) {
+            // Tạo một đối tượng Date nếu đầu vào không phải là Date object
+            const dateObj = (date instanceof Date) ? date : new Date(date);
+
+            // Mảng chứa tên các thứ trong tuần (bắt đầu từ Chủ Nhật)
+            const daysOfWeek = [
+                "Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư",
+                "Thứ Năm", "Thứ Sáu", "Thứ Bảy"
+            ];
+
+            // Lấy chỉ số của ngày trong tuần (0-6)
+            const dayIndex = dateObj.getDay();
+
+            // Trả về tên thứ tương ứng từ mảng
+            return daysOfWeek[dayIndex];
+        }
+
+        async function setupImage() {
+            try {
+                if (!upload.files.length) {
+                    alert('Cần chọn ảnh trước');
+                    return false;
+                }
+
+                loading.classList.toggle('hide', false);
+
+                const [file] = upload.files
+
+                if (file.name.endsWith('.heic')) {
+                    const convertedBlob = await heic2any({ blob: file, toType: 'image/jpeg' });
+                    const imageUrl = URL.createObjectURL(convertedBlob);
+
+                    wrapper.style.backgroundImage = `url(${imageUrl})`;
+                } else {
+                    const src = URL.createObjectURL(file);
+                    wrapper.style.backgroundImage = `url(${src})`;
+                }
+
+                document.getElementById('time').innerHTML = document.getElementById('time-picker').value;
+                const date = document.getElementById('date-picker').valueAsDate;
+
+                document.getElementById("date").innerHTML = date.getDate() + " Tháng " + (date.getMonth() + 1) + "," + date.getFullYear();
+                document.getElementById("weekday").innerHTML = getVietnameseDayOfWeek(date);
+                document.getElementById("guard-token").innerHTML = generateRandomString(14);
+                document.getElementById("location").innerText = document.getElementById("location-picker").value;
+
+                loading.classList.toggle('hide', true);
+            } catch (error) {
+                alert(error);
+            }
+
+            return true;
+        }
+
+        upload.addEventListener('change', (e) => {
+            // setupImage();
+        });
+
+        function preview() {
+            // setupImage();
+        }
+
+        async function downloadImage() {
+            await setupImage();
+            downloadDivAsJPG();
+        }
+
+        const current = new Date();
+
+        var month = (current.getMonth() + 1);
+        var day = current.getDate();
+        if (month < 10)
+            month = "0" + month;
+        if (day < 10)
+            day = "0" + day;
+        var today = day + "/" + month + "/" + current.getFullYear();
+
+        function generateRandomString(length) {
+            // Định nghĩa các ký tự sẽ được sử dụng để tạo chuỗi ngẫu nhiên
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            const charactersLength = characters.length;
+
+            // Lặp qua độ dài mong muốn của chuỗi
+            for (let i = 0; i < length; i++) {
+                // Lấy một ký tự ngẫu nhiên từ chuỗi 'characters' và thêm vào kết quả
+                result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            }
+
+            return result;
+        }
+
+        function formatTime(date) {
+            const h = String(date.getHours()).padStart(2, '0');
+            const m = String(date.getMinutes()).padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        setTimeout(() => {
+            document.getElementById('time-picker').value = formatTime(current);
+            document.getElementById('date-picker').valueAsDate = current;
+        }, 100);
+
+        function reverseGeocode(lat, lon) {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Địa chỉ:", data.display_name);
+                    document.getElementById("location-picker").innerText = data.display_name;
+                })
+                .catch(error => {
+                    console.error("Lỗi khi truy vấn địa chỉ:", error);
+                });
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                console.log(`Tọa độ: ${latitude}, ${longitude}`);
+
+                // Gọi API để lấy địa chỉ từ tọa độ
+                reverseGeocode(latitude, longitude);
+            },
+            function (error) {
+                console.error("Lỗi khi lấy vị trí:", error.message);
+            },
+            {
+                enableHighAccuracy: true
+            }
+        );
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js').catch(error => {
+                    console.error('Không đăng ký được service worker:', error);
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>
